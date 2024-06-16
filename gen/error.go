@@ -39,8 +39,10 @@ func FromFailureMethodName(n int) string {
 }
 
 func GenerateError(f *File, n int) {
+	f.Commentf("%s is a type that can be used to represent an error with %d cases.", ErrorName(n), n)
 	f.Type().
-		Id(ErrorName(n)).Types(ErrorGenericParams(n)...).
+		Id(ErrorName(n)).
+		Types(ErrorGenericParams(n)...).
 		Struct(
 			Id("i").
 				Qual(MO_PACKAGE, EitherName(n)).
@@ -63,6 +65,7 @@ func GenerateError(f *File, n int) {
 	mutableReceiver := Id("e").Op("*").Id(ErrorName(n)).Types(ErrorGenericIDs(n)...)
 
 	for i := 1; i <= n; i++ {
+		f.Commentf("Return whether the error is in the case %d.", i)
 		f.Func().
 			Params(receiver).
 			Id(FailureMethodName(i)).
@@ -72,6 +75,7 @@ func GenerateError(f *File, n int) {
 	}
 
 	for i := 1; i <= n; i++ {
+		f.Commentf("Overwrite the error into the case %d with the given error.", i)
 		f.Func().
 			Params(mutableReceiver).
 			Id(FromFailureMethodName(i)).

@@ -25,6 +25,7 @@ func GenerateResult(f *File, n int) {
 
 	errorType := Id(ErrorName(n)).Types(ErrorGenericIDs(n)...)
 
+	f.Commentf("%s is a type that can be used to represent a result that contains a value in success case and %d error types in failure case.", ResultName(n), n)
 	f.Type().
 		Id(ResultName(n)).Types(tParams...).
 		Struct(
@@ -37,6 +38,7 @@ func GenerateResult(f *File, n int) {
 	mutableReceiver := Id("r").Op("*").Id(ResultName(n)).Types(t...)
 	internalRef := Id("r").Dot("i")
 
+	f.Commentf("Return whether the result is the success case.")
 	f.Func().
 		Params(receiver).
 		Id("IsSuccess").
@@ -46,6 +48,7 @@ func GenerateResult(f *File, n int) {
 			Return(internalRef.Clone().Dot("IsLeft").Call()),
 		)
 
+	f.Commentf("Return whether the result is the failure case.")
 	f.Func().
 		Params(receiver).
 		Id("IsFailure").
@@ -55,6 +58,7 @@ func GenerateResult(f *File, n int) {
 			Return(internalRef.Clone().Dot("IsRight").Call()),
 		)
 
+	f.Commentf("Overwrite the value of the result with the given value into the success case.")
 	f.Func().
 		Params(mutableReceiver).
 		Id("FromSuccess").
@@ -66,6 +70,7 @@ func GenerateResult(f *File, n int) {
 		)
 
 	for i := 1; i <= n; i++ {
+		f.Commentf("Overwrite the error of the result with the given error into the failure case %d.", i)
 		f.Func().
 			Params(mutableReceiver).
 			Id(FromFailureMethodName(i)).
@@ -81,6 +86,7 @@ func GenerateResult(f *File, n int) {
 			)
 	}
 
+	f.Commentf("Unpack the result into the value, the error, and whether the result is the success case.")
 	f.Func().
 		Params(receiver).
 		Id("Unpack").
