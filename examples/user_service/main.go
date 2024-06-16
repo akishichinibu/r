@@ -1,15 +1,14 @@
-package examples
+package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/akishichinibu/r"
 )
 
-func empty[T any]() (t T) {
-	return
-}
-
+// define you own error types
 type UserNotFoundErr struct {
 	_      string
 	UserID string
@@ -37,8 +36,8 @@ type GetUserBalanceResult struct {
 	r.Result2[int, UserNotFoundErr, UserRestrictedErr]
 }
 
-// Service Layer
-func GetUserBalance(userID string) (GetUserBalanceResult, error) {
+// write your internal implementation
+func getUserBalance(userID string) (GetUserBalanceResult, error) {
 	var r GetUserBalanceResult
 	if userID == "invalid" {
 		r.FromFailure1(UserNotFoundErr{
@@ -60,10 +59,9 @@ func GetUserBalance(userID string) (GetUserBalanceResult, error) {
 	return r, nil
 }
 
-// Handler Layer
-func UserGetUserBalance() error {
-	userID := "invalid"
-	result, err := GetUserBalance(userID)
+// write a service function
+func serviceGetUserBalance(userID string) error {
+	result, err := getUserBalance(userID)
 	if err != nil {
 		return err
 	}
@@ -75,15 +73,23 @@ func UserGetUserBalance() error {
 	}
 
 	if e1, ok := known.Failure1(); ok {
-		fmt.Println(e1.Error())
-		// or return a 400 response
-		return nil
+		return fmt.Errorf("service failed: %w", e1)
 	}
 
 	if e2, ok := known.Failure2(); ok {
-		fmt.Println(e2.Error())
-		return nil
+		return fmt.Errorf("service failed: %w", e2)
 	}
 
 	return nil
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("usage: user_service <user_id>")
+		os.Exit(1)
+	}
+	userID := os.Args[1]
+	if err := serviceGetUserBalance(userID); err != nil {
+		log.Fatalln(err)
+	}
 }

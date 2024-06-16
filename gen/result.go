@@ -21,9 +21,9 @@ func GenerateResult(f *File, n int) {
 
 	t := make([]Code, 0)
 	t = append(t, Id(ValueTypeName()))
-	t = append(t, ErrorGenericIds(n)...)
+	t = append(t, ErrorGenericIDs(n)...)
 
-	errorType := Id(ErrorName(n)).Types(ErrorGenericIds(n)...)
+	errorType := Id(ErrorName(n)).Types(ErrorGenericIDs(n)...)
 
 	f.Type().
 		Id(ResultName(n)).Types(tParams...).
@@ -43,7 +43,7 @@ func GenerateResult(f *File, n int) {
 		Params().
 		Bool().
 		Block(
-			Return(internalRef.Dot("IsLeft").Call()),
+			Return(internalRef.Clone().Dot("IsLeft").Call()),
 		)
 
 	f.Func().
@@ -52,7 +52,7 @@ func GenerateResult(f *File, n int) {
 		Params().
 		Bool().
 		Block(
-			Return(internalRef.Dot("IsRight").Call()),
+			Return(internalRef.Clone().Dot("IsRight").Call()),
 		)
 
 	f.Func().
@@ -60,7 +60,7 @@ func GenerateResult(f *File, n int) {
 		Id("FromSuccess").
 		Params(Id("value").Id(ValueTypeName())).
 		Block(
-			internalRef.Op("=").Qual(MO_PACKAGE, "Left").
+			internalRef.Clone().Op("=").Qual(MO_PACKAGE, "Left").
 				Types(Id(ValueTypeName()), errorType).
 				Call(Id("value")),
 		)
@@ -71,11 +71,12 @@ func GenerateResult(f *File, n int) {
 			Id(FromFailureMethodName(i)).
 			Params(Id("err").Id(ErrorTypeName(i))).
 			Block(
-				Var().Id("e").Id(ErrorName(n)).Types(ErrorGenericIds(n)...),
+				Var().Id("e").Id(ErrorName(n)).Types(ErrorGenericIDs(n)...),
 				Id("e").Dot(FromFailureMethodName(i)).Call(Id("err")),
-				internalRef.Op("=").
+				internalRef.Clone().
+					Op("=").
 					Qual(MO_PACKAGE, "Right").
-					Types(Id(ValueTypeName()), Id(ErrorName(n)).Types(ErrorGenericIds(n)...)).
+					Types(Id(ValueTypeName()), Id(ErrorName(n)).Types(ErrorGenericIDs(n)...)).
 					Call(Id("e")),
 			)
 	}

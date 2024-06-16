@@ -22,12 +22,12 @@ func ErrorGenericParams(n int) []Code {
 	return genericParams
 }
 
-func ErrorGenericIds(n int) []Code {
-	genericIds := make([]Code, 0)
+func ErrorGenericIDs(n int) []Code {
+	genericIDs := make([]Code, 0)
 	for i := 1; i <= n; i++ {
-		genericIds = append(genericIds, Id(ErrorTypeName(i)))
+		genericIDs = append(genericIDs, Id(ErrorTypeName(i)))
 	}
-	return genericIds
+	return genericIDs
 }
 
 func FailureMethodName(n int) string {
@@ -44,23 +44,23 @@ func GenerateError(f *File, n int) {
 		Struct(
 			Id("i").
 				Qual(MO_PACKAGE, EitherName(n)).
-				Types(ErrorGenericIds(n)...),
+				Types(ErrorGenericIDs(n)...),
 		)
 
 	internalRef := Id("e").Dot("i")
 
 	errBranches := make([]Code, n)
 	if n == 2 {
-		errBranches[0] = internalRef.Dot("Left").Call()
-		errBranches[1] = internalRef.Dot("Right").Call()
+		errBranches[0] = internalRef.Clone().Dot("Left").Call()
+		errBranches[1] = internalRef.Clone().Dot("Right").Call()
 	} else {
 		for i := 1; i <= n; i++ {
-			errBranches[i-1] = internalRef.Dot(fmt.Sprintf("Arg%d", i)).Call()
+			errBranches[i-1] = internalRef.Clone().Dot(fmt.Sprintf("Arg%d", i)).Call()
 		}
 	}
 
-	receiver := Id("e").Id(ErrorName(n)).Types(ErrorGenericIds(n)...)
-	mutableReceiver := Id("e").Op("*").Id(ErrorName(n)).Types(ErrorGenericIds(n)...)
+	receiver := Id("e").Id(ErrorName(n)).Types(ErrorGenericIDs(n)...)
+	mutableReceiver := Id("e").Op("*").Id(ErrorName(n)).Types(ErrorGenericIDs(n)...)
 
 	for i := 1; i <= n; i++ {
 		f.Func().
@@ -77,8 +77,9 @@ func GenerateError(f *File, n int) {
 			Id(FromFailureMethodName(i)).
 			Params(Id("err").Id(ErrorTypeName(i))).
 			Block(
-				internalRef.Op("=").
-					Qual(MO_PACKAGE, NewEitherName(n, i)).Types(ErrorGenericIds(n)...).
+				internalRef.Clone().
+					Op("=").
+					Qual(MO_PACKAGE, NewEitherName(n, i)).Types(ErrorGenericIDs(n)...).
 					Call(Id("err")),
 			)
 	}
